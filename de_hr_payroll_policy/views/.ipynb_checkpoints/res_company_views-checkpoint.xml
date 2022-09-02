@@ -8,6 +8,7 @@
         <field name="arch" type="xml">
                <xpath expr="//field['vat']" position="after">               
                     <field name="retirement_age" />
+                    <field name="hr_id" />
                </xpath>
             
              </field>
