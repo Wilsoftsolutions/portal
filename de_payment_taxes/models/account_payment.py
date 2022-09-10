@@ -10,6 +10,13 @@ class AccountPayment(models.Model):
     
     tax_line_ids = fields.One2many('account.tax.payment', 'payment_id', string='Payment')
     tax_cpr_number = fields.Char(string='CPR#')
+    ext_account_id = fields.Many2one(
+        comodel_name='account.account',
+        string='Destination Account',
+        store=True, readonly=False,
+        domain="[('company_id', '=', company_id)]",
+        check_company=True)
+    is_lock_entry = fields.Boolean(string='Lock GL')
     total_wht_tax_amount = fields.Float(string='WHT Amount', compute='_compute_tax_amount')
     wht_percentage = fields.Float(string='Percentage')
     
@@ -116,13 +123,13 @@ class AccountPayment(models.Model):
                 'debit': counterpart_balance if counterpart_balance > 0.0 else 0.0,
                 'credit': -counterpart_balance if counterpart_balance < 0.0 else 0.0,
                 'partner_id': self.partner_id.id,
-                'account_id': self.destination_account_id.id,
+                'account_id': self.ext_account_id.id if self.ext_account_id else self.destination_account_id.id,
             },
             
         ]
         for tax_line in self.tax_line_ids:
             line_vals_list.append({
-                'name': str(tax_line.tax_id.name)+' '+ self.payment_reference or default_line_name,
+                'name': self.payment_reference or default_line_name,
                 'date_maturity': self.date,
                 'amount_currency': counterpart_amount_currency,
                 'currency_id': currency_id,
@@ -185,12 +192,14 @@ class AccountPayment(models.Model):
                     ))
 
                 if len(counterpart_lines) != 1:
-                    raise UserError(_(
-                        "Journal Entry %s is not valid. In order to proceed, the journal items must "
-                        "include one and only one receivable/payable account (with an exception of "
-                        "internal transfers).",
-                        move.display_name,
-                    ))
+                    pass
+
+                    #raise UserError(_(
+                    #    "Journal Entry %s is not valid. In order to proceed, the journal items must "
+                    #    "include one and only one receivable/payable account (with an exception of "
+                    #    "internal transfers).",
+                    #    move.display_name,
+                    #))
 
                 if writeoff_lines and len(writeoff_lines.account_id) != 1:
                     pass
@@ -206,13 +215,13 @@ class AccountPayment(models.Model):
                         "share the same currency.",
                         move.display_name,
                     ))
-
                 if any(line.partner_id != all_lines[0].partner_id for line in all_lines):
-                    raise UserError(_(
-                        "Journal Entry %s is not valid. In order to proceed, the journal items must "
-                        "share the same partner.",
-                        move.display_name,
-                    ))
+                    pass
+                    #raise UserError(_(
+                    #    "Journal Entry %s is not valid. In order to proceed, the journal items must "
+                    #    "share the same partner.",
+                    #    move.display_name,
+                    #))
 
                 if counterpart_lines.account_id.user_type_id.type == 'receivable':
                     partner_type = 'customer'

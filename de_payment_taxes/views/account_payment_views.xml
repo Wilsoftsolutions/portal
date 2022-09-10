@@ -26,7 +26,9 @@
 			<field name="arch" type="xml">
 
 				<xpath expr="//field[@name='journal_id']" position="after">
-                        <field name="tax_cpr_number"   />
+                                  <field name="ext_account_id"   attrs="{'readonly': ['|',('is_lock_entry','=',True),('state', '=', 'posted')]}" />
+                                  <field name="tax_cpr_number"   />
+                                  <field name="is_lock_entry"  invisible='1' />
 				</xpath>
                 <xpath expr="//group[@name='group2']" position="after">
                        <notebook>
