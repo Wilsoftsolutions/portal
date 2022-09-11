@@ -67,7 +67,11 @@ class HrLoan(models.Model):
             loan_exist = self.env['hr.loan'].search([('employee_id','=',line.employee_id.id),('date','>', fields.date.today()-timedelta(30) )], limit=1)
             if loan_exist and line.loan_type_id.per_month==True:
                 raise UserError('Already Loan Request Exist in System! '+ str(loan_exist.name)+' Not Allow to request Advance twice in a single month. Please Select Date greater than '+str(loan_exist.date+timedelta(30)))
-    
+            contract = self.env['hr.contract'].search([('employee_id','=',line.employee_id.id),('state','=','open')], limit=1)
+            if contract:
+                amount_limit = ((contract.wage)/100) * line.loan_type_id.percentage
+                if line.loan_amount > amount_limit and line.loan_type_id.percentage > 0:
+                    raise UserError('Not Allow to Submit Advance Amount Greater than '+str(amount_limit) )
     
     
     @api.model
